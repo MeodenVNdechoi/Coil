@@ -1,36 +1,51 @@
-local replicatedStorage = game:GetService("ReplicatedStorage")
-local createSpringEvent = replicatedStorage:WaitForChild("CreateSpring")
+-- Tùy chỉnh tốc độ acid trong game
+local acid = workspace:FindFirstChild("Acid") -- Tìm đối tượng Acid
+if acid then
+    local speed = 5 -- Tốc độ ban đầu của acid
 
-createSpringEvent.OnServerEvent:Connect(function(player)
-    -- Tạo một lò xo dạng coil
-    local spring = Instance.new("Part")
-    spring.Size = Vector3.new(1, 1, 1)
-    spring.Shape = Enum.PartType.Ball
-    spring.BrickColor = BrickColor.new("Bright red")
-    spring.Material = Enum.Material.SmoothPlastic
-    spring.Anchored = true
-    spring.CanCollide = false
-    spring.Parent = workspace
-
-    -- Sử dụng Mesh để tạo coil
-    local mesh = Instance.new("SpecialMesh")
-    mesh.MeshType = Enum.MeshType.FileMesh
-    mesh.MeshId = "rbxassetid://1051557"
-    mesh.Scale = Vector3.new(3, 3, 3)
-    mesh.Parent = spring
-
-    -- Đặt vị trí của coil (tại vị trí người chơi)
-    local character = player.Character or player.CharacterAdded:Wait()
-    spring.Position = character.HumanoidRootPart.Position + Vector3.new(0, 5, 0)
-
-    -- Hiệu ứng lò xo nhảy lên xuống
-    local function animateSpring()
-        local tweenService = game:GetService("TweenService")
-        local info = TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
-        local goal = {Position = spring.Position + Vector3.new(0, 2, 0)}
-        local tween = tweenService:Create(spring, info, goal)
-        tween:Play()
+    -- Hàm điều chỉnh tốc độ acid
+    local function adjustAcidSpeed(newSpeed)
+        speed = newSpeed
+        print("Tốc độ acid đã được thay đổi thành:", speed)
     end
 
-    animateSpring()
-end)
+    -- Acid di chuyển với tốc độ hiện tại
+    game:GetService("RunService").Heartbeat:Connect(function()
+        if acid and acid:IsA("Part") then
+            acid.Position = acid.Position + Vector3.new(0, speed * 0.01, 0)
+        end
+    end)
+
+    -- Tạo GUI để điều chỉnh tốc độ acid
+    local player = game.Players.LocalPlayer
+    local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+    local frame = Instance.new("Frame", screenGui)
+    frame.Size = UDim2.new(0, 200, 0, 100)
+    frame.Position = UDim2.new(0.5, -100, 0.1, 0)
+    frame.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+
+    local textLabel = Instance.new("TextLabel", frame)
+    textLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    textLabel.Text = "Tốc độ Acid: " .. speed
+    textLabel.TextColor3 = Color3.new(1, 1, 1)
+    textLabel.BackgroundTransparency = 1
+
+    local textBox = Instance.new("TextBox", frame)
+    textBox.Size = UDim2.new(1, 0, 0.5, 0)
+    textBox.Position = UDim2.new(0, 0, 0.5, 0)
+    textBox.PlaceholderText = "Nhập tốc độ mới"
+    textBox.Text = ""
+
+    textBox.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            local newSpeed = tonumber(textBox.Text)
+            if newSpeed then
+                adjustAcidSpeed(newSpeed)
+                textLabel.Text = "Tốc độ Acid: " .. speed
+                textBox.Text = ""
+            else
+                textBox.Text = "Không hợp lệ!"
+            end
+        end
+    end)
+end
